@@ -1,0 +1,72 @@
+services:
+  products-service:
+    image: openjdk:21-jdk
+    working_dir: /app
+    volumes:
+      - ./practice:/app
+    expose:
+      - "8080"
+    command: ./mvnw spring-boot:run
+    depends_on:
+      - db
+    env_file:
+      - ./practice/.env
+    networks:
+      - public
+      - private
+      
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-bank-api
+    expose:
+      - 15672
+      - 5672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    networks:
+      - private
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - private
+  
+  redis:
+    image: redis:7.4
+    container_name: redis
+    restart: always
+    command: [
+      "redis-server",
+      "--requirepass", "${REDIS_PASSWORD}",
+      "--appendonly", "yes"
+    ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - private
+
+volumes:
+  postgres_data:
+  rabbitmq-data:
+  redis_data:
+  
+networks:
+  public:
+    driver: bridge
+  private:
+    driver: bridge
