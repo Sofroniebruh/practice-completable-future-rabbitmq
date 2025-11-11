@@ -12,7 +12,7 @@ public class ProductsDataService {
     private final ProductsDataRepository productsDataRepository;
 
     public PaginatedResponse<ProductsData> getPaginatedProductsDate(Pageable pageable) {
-        Page<ProductsData> allDataPaged = productsDataRepository.getAll(pageable);
+        Page<ProductsData> allDataPaged = productsDataRepository.findAll(pageable);
 
         return new PaginatedResponse<>(
                 allDataPaged.getContent(),
