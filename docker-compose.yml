@@ -1,16 +1,32 @@
 services:
   products-service:
-    image: openjdk:21-jdk
+    image: eclipse-temurin:21-jdk
     working_dir: /app
     volumes:
       - ./practice:/app
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     command: ./mvnw spring-boot:run
     depends_on:
       - db
     env_file:
       - ./practice/.env
+    networks:
+      - public
+      - private
+  
+  products-logging:
+    image: eclipse-temurin:21-jdk
+    working_dir: /app
+    volumes:
+      - ./products-logging:/app
+    ports:
+      - "8081:8081"
+    command: ./mvnw spring-boot:run
+    depends_on:
+      - db
+    env_file:
+      - ./products-logging/.env
     networks:
       - public
       - private
