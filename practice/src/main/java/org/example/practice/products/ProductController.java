@@ -2,6 +2,8 @@ package org.example.practice.products;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.flogger.Flogger;
+import lombok.extern.slf4j.Slf4j;
 import org.example.practice.products.records.ProductDTO;
 import org.example.practice.products.records.UpdateDTO;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/products")
+@Slf4j
 public class ProductController {
     private final ProductService productService;
 
@@ -21,12 +24,13 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> saveProduct(@Valid ProductDTO dto) {
+    public ResponseEntity<Product> saveProduct(@Valid @RequestBody ProductDTO dto) {
+        log.debug("DTO: {}", dto);
         return ResponseEntity.ok().body(productService.saveProduct(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable UUID id, @Valid UpdateDTO dto) {
+    public ResponseEntity<Product> updateProduct(@PathVariable UUID id, @RequestBody UpdateDTO dto) {
         return ResponseEntity.ok().body(productService.updateProductById(id, dto));
     }
 
