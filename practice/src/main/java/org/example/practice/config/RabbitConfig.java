@@ -15,15 +15,17 @@ import org.springframework.amqp.core.Queue;
 @Configuration
 @Slf4j
 public class RabbitConfig {
-    private static final String PRACTICE_ROUTING_KEY = "practice.routing_key_1";
-    private static final String PRACTICE_EXCHANGE = "practice.exchange_1";
-    private static final String PRACTICE_QUEUE = "practice.queue_1";
+    public static final String PRACTICE_ROUTING_KEY = "practice.routing_key_1";
+    public static final String PRACTICE_EXCHANGE = "practice.exchange_1";
+    public static final String PRACTICE_QUEUE = "practice.queue_1";
 
     @Bean
     public RabbitTemplate rabbitTemplate(CachingConnectionFactory cf) {
         RabbitTemplate rt = new RabbitTemplate(cf);
 
         rt.setMandatory(true);
+        rt.setReplyTimeout(5000);
+        rt.setReceiveTimeout(5000);
         rt.setConfirmCallback(((correlationData, ack, cause) -> {
             if (!ack) {
                 if (correlationData != null) {
