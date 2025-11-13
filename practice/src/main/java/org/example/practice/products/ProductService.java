@@ -7,6 +7,7 @@ import org.example.practice.config.exceptions.ProductNotFoundException;
 import org.example.practice.products.records.ProductDTO;
 import org.example.practice.products.records.UpdateDTO;
 import org.example.practice.rabbit_services.AsyncRabbitProductService;
+import org.example.practice.rabbit_services.EventType;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -45,15 +46,18 @@ public class ProductService {
             return productRepository.save(product);
         }, mainExecutor);
 
-        return asyncSaveProduct.thenCombine(asyncRabbitProductService.saveCreatedLogsToLogService(), (product, response) -> {
-            if (response) {
-                log.debug("Message processed successfully");
-            } else {
-                log.error("Product saved successfully, failed to log data in product logger service");
-            }
+        return asyncSaveProduct.thenCompose(product ->
+                        asyncRabbitProductService.saveCreatedLogsToLogService(EventType.CREATED, product)
+                .thenApply(response -> {
+                    if (response) {
+                        log.debug("Message processed successfully");
+                    } else {
+                        log.error("Product saved successfully, failed to log data in product logger service");
+                    }
 
-            return product;
-        });
+                    return product;
+                })
+        );
     }
 
     public Product getProductById(UUID id) {

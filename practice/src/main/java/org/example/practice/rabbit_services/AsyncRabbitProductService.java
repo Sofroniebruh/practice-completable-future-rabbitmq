@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.example.practice.config.RabbitConfig;
 import org.example.practice.config.exceptions.InternalErrorException;
+import org.example.practice.products.Product;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -29,12 +30,16 @@ public class AsyncRabbitProductService {
         this.rabbitExecutor = rabbitExecutor;
     }
 
-    public CompletableFuture<Boolean> saveCreatedLogsToLogService() {
+    public CompletableFuture<Boolean> saveCreatedLogsToLogService(EventType event, Product product) {
         return CompletableFuture.supplyAsync(() -> {
             Object rabbitResponse = rabbitTemplate.convertSendAndReceive(
                     RabbitConfig.PRACTICE_EXCHANGE,
                     RabbitConfig.PRACTICE_ROUTING_KEY,
-                    Map.of("created", true)
+                    Map.of("event", event,
+                            "quantity", product.getQuantity(),
+                            "price", product.getProductPrice(),
+                            "productId", product.getId()
+                    )
             );
 
             if (rabbitResponse != null) {
