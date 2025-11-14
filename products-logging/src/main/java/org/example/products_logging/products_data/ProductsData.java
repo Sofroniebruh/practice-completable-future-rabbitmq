@@ -3,6 +3,8 @@ package org.example.products_logging.products_data;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -12,8 +14,10 @@ public class ProductsData {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    private int productsCreated;
-    private int productsQuantity;
-    private double totalPrice;
-    private int productsDeleted;
+    private LocalDateTime timestamp;
+    @Enumerated(EnumType.STRING)
+    private EventType eventType;
+    private UUID productId;
+    private BigDecimal priceChange;
+    private int quantityChange;
 }
