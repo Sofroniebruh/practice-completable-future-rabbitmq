@@ -44,7 +44,21 @@ public class ProductService {
                     .build();
 
             return productRepository.save(product);
-        }, mainExecutor);
+        }, mainExecutor).handle((result, ex) -> {
+            if (ex != null) {
+                Throwable cause = ex.getCause();
+
+                if (cause instanceof IllegalArgumentException e) {
+                    log.error("Error while saving product: {}", e.getMessage());
+
+                    throw e;
+                }
+
+                throw new InternalErrorException();
+            }
+
+            return result;
+        });
 
         return asyncSaveProduct.thenCompose(product ->
                         asyncRabbitProductService.saveCreatedLogsToLogService(EventType.CREATED, product)

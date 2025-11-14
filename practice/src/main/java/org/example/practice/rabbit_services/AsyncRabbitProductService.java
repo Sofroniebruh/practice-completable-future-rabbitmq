@@ -35,10 +35,10 @@ public class AsyncRabbitProductService {
             Object rabbitResponse = rabbitTemplate.convertSendAndReceive(
                     RabbitConfig.PRACTICE_EXCHANGE,
                     RabbitConfig.PRACTICE_ROUTING_KEY,
-                    Map.of("event", event,
+                    Map.of("event", event.toString(),
                             "quantity", product.getQuantity(),
                             "price", product.getProductPrice(),
-                            "productId", product.getId()
+                            "productId", product.getId().toString()
                     )
             );
 
@@ -53,9 +53,11 @@ public class AsyncRabbitProductService {
             return false;
         }, rabbitExecutor)
                 .exceptionally((ex) -> {
-                    if (ex instanceof TimeoutException) {
+                    Throwable cause = ex.getCause();
+
+                    if (cause instanceof TimeoutException e) {
                         throw new InternalErrorException(
-                                String.format("RabbitMq timed out: %s", ex.getMessage()));
+                                String.format("RabbitMq timed out: %s", e.getMessage()));
                     }
 
                     log.error("RabbitMq Internal Error: {}", ex.getMessage());
