@@ -64,7 +64,7 @@ public class ProductService {
                         asyncRabbitProductService.saveCreatedLogsToLogService(EventType.CREATED, product)
                 .thenApply(response -> {
                     if (response) {
-                        log.debug("Message processed successfully");
+                        log.debug("Message processed successfully on save");
                     } else {
                         log.error("Product saved successfully, failed to log data in product logger service");
                     }
@@ -89,22 +89,41 @@ public class ProductService {
     }
 
     @Transactional
-    public Product updateProductById(UUID id, UpdateDTO dto) {
-        try {
+    public CompletableFuture<Product> updateProductById(UUID id, UpdateDTO dto) {
+        CompletableFuture<Product> updatedProduct = CompletableFuture.supplyAsync(() -> {
             Product product = getProductOrException(id);
 
             productMapper.updateProductFromDto(dto, product);
 
             return productRepository.save(product);
-        } catch (ProductNotFoundException e) {
-            log.error("Error retrieving the product while updating: {}", e.getMessage());
+        }).handle((product, ex) -> {
+            if (ex != null) {
+                Throwable cause = ex.getCause();
 
-            throw e;
-        } catch (Exception e) {
-            log.error("Internal error while updating: {}", e.getMessage());
+                if (cause instanceof ProductNotFoundException e) {
+                    log.error("Error retrieving the product while updating: {}", e.getMessage());
 
-            throw new InternalErrorException();
-        }
+                    throw e;
+                }
+
+                throw new InternalErrorException();
+            }
+
+            return product;
+        });
+
+        return updatedProduct.thenCompose(product ->
+            asyncRabbitProductService.saveCreatedLogsToLogService(EventType.UPDATED, product)
+                .thenApply((response) -> {
+                    if (response) {
+                        log.debug("Message processed successfully on update");
+                    } else {
+                        log.error("Product updated successfully, failed to log data in product logger service");
+                    }
+
+                    return product;
+            })
+        );
     }
 
     public Product deleteById(UUID id)

@@ -52,17 +52,21 @@ public class AsyncRabbitProductService {
 
             return false;
         }, rabbitExecutor)
-                .exceptionally((ex) -> {
-                    Throwable cause = ex.getCause();
+                .handle((result, ex) -> {
+                    if (ex != null) {
+                        Throwable cause = ex.getCause();
 
-                    if (cause instanceof TimeoutException e) {
-                        throw new InternalErrorException(
-                                String.format("RabbitMq timed out: %s", e.getMessage()));
+                        if (cause instanceof TimeoutException e) {
+                            throw new InternalErrorException(
+                                    String.format("RabbitMq timed out: %s", e.getMessage()));
+                        }
+
+                        log.error("RabbitMq Internal Error: {}", ex.getMessage());
+
+                        throw new InternalErrorException();
                     }
 
-                    log.error("RabbitMq Internal Error: {}", ex.getMessage());
-
-                    throw new InternalErrorException();
+                    return result;
                 });
     }
 
