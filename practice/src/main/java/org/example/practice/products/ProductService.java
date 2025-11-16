@@ -126,28 +126,41 @@ public class ProductService {
         );
     }
 
-    public Product deleteById(UUID id)
-    {
-        try
-        {
+    public CompletableFuture<Product> deleteById(UUID id) {
+        CompletableFuture<Product> deletedProduct = CompletableFuture.supplyAsync(() -> {
             Product product = getProductOrException(id);
 
             productRepository.deleteById(product.getId());
 
             return product;
-        }
-        catch (ProductNotFoundException e)
-        {
-            log.error("Error retrieving the product while deleting: {}", e.getMessage());
+        }).handle((product, ex) -> {
+            if (ex != null) {
+                Throwable cause = ex.getCause();
 
-            throw e;
-        }
-        catch (Exception e)
-        {
-            log.error("Internal error while deleting: {}", e.getMessage());
+                if (cause instanceof ProductNotFoundException e) {
+                    log.error("Error retrieving the product while deleting: {}", e.getMessage());
 
-            throw new InternalErrorException();
-        }
+                    throw e;
+                }
+
+                throw new InternalErrorException();
+            }
+
+            return product;
+        });
+
+        return deletedProduct.thenCompose((product) ->
+                asyncRabbitProductService.saveCreatedLogsToLogService(EventType.DELETED, product)
+                        .thenApply(response -> {
+                            if (response) {
+                                log.debug("Message processed successfully on delete");
+                            } else {
+                                log.error("Product deleted successfully, failed to log data in product logger service");
+                            }
+
+                            return product;
+                        })
+        );
     }
 
     private Product getProductOrException(UUID id)
