@@ -33,7 +33,7 @@ services:
       
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq-bank-api
+    container_name: rabbitmq-practice
     expose:
       - 15672
       - 5672
