@@ -12,5 +12,5 @@ import java.util.UUID;
 @Repository
 public interface ProductsDataRepository extends JpaRepository<ProductsData, UUID> {
     Page<ProductsData> findAll(@NonNull Pageable pageable);
-    Optional<ProductsData> findProductsDataByProductId(UUID productId);
+    Optional<ProductsData> findFirstProductsDataByProductId(UUID productId);
 }

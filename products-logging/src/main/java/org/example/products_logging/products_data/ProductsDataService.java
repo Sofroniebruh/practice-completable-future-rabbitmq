@@ -65,7 +65,7 @@ public class ProductsDataService {
         EventType type = EventType.valueOf(dto.event());
 
         if (type == EventType.UPDATED || type == EventType.DELETED) {
-            return productsDataRepository.findProductsDataByProductId(UUID.fromString(dto.productId())).isPresent();
+            return productsDataRepository.findFirstProductsDataByProductId(UUID.fromString(dto.productId())).isPresent();
         }
 
         return true;
